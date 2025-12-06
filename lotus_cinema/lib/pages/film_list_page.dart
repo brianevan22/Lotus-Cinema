@@ -77,6 +77,15 @@ class _FilmListPageState extends State<FilmListPage> {
     return id == null ? '-' : 'ID $id';
   }
 
+  String _sanitizeUrl(String? raw) {
+    if (raw == null) return '';
+    var value = raw.trim();
+    if (value.isEmpty) return '';
+    value = value.replaceAllMapped(RegExp(r':(\d+):\1'), (m) => ':${m[1]}');
+    value = value.replaceAll(RegExp(r'(?<=https?:\/\/)(\/{2,})'), '/');
+    return value;
+  }
+
   int _gridCountForWidth(double width) {
     if (width < 360) return 1;
     if (width < 600) return 2;
@@ -93,29 +102,21 @@ class _FilmListPageState extends State<FilmListPage> {
     return 0.65;
   }
 
-  /// URL poster ke backend /poster/<filename>
-  String? _posterUrl(Map<String, dynamic> m) {
-    final assetUrl = m['poster_asset_url'] as String?;
-    if (assetUrl != null && assetUrl.trim().isNotEmpty) {
-      return api.resolvePosterUrl(assetUrl.trim());
+  /// Samakan cara resolving poster dengan halaman detail
+  String? _posterUrl(Map<String, dynamic> film) {
+    for (final key in [
+      'poster_asset_url',
+      'poster_url',
+      'poster',
+      'poster_path',
+    ]) {
+      final resolved = api.resolvePosterUrl(film[key]?.toString());
+      if (resolved != null) {
+        final sanitized = _sanitizeUrl(resolved);
+        if (sanitized.isNotEmpty) return sanitized;
+      }
     }
-
-    final raw = (m['poster_path'] ?? m['poster'])?.toString().trim();
-    if (raw == null || raw.isEmpty) return null;
-
-    if (raw.startsWith('http://') || raw.startsWith('https://')) {
-      return api.resolvePosterUrl(raw);
-    }
-
-    String filename;
-    if (raw.contains('/')) {
-      filename = raw.split('/').last;
-    } else {
-      filename = raw;
-    }
-
-    final url = '${api.baseUrl}/poster/$filename';
-    return api.resolvePosterUrl(url);
+    return null;
   }
 
   Widget _posterContent(Map<String, dynamic> film) {

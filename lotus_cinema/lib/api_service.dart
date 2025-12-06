@@ -64,7 +64,7 @@ class ApiService {
   final String baseUrl;
   late final String _effectiveBaseUrl;
 
-  static const _defaultBackend = 'https://lotus-cinema.kesug.com';
+  static const _defaultBackend = 'http://127.0.0.1:8000';
 
   static String suggestBaseUrl() {
     if (kIsWeb) return _defaultBackend;
