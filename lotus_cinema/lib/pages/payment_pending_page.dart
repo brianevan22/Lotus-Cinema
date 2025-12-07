@@ -253,13 +253,16 @@ class _PaymentPendingPageState extends State<PaymentPendingPage> {
                           Center(
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(24),
-                              child: Image.asset(
-                                qrAsset != null && qrAsset.isNotEmpty
-                                    ? qrAsset
-                                    : 'assets/QRIS.png',
+                              child: Container(
                                 width: 220,
-                                height: 260,
-                                fit: BoxFit.cover,
+                                height: 310,
+                                color: Colors.white,
+                                child: Image.asset(
+                                  qrAsset != null && qrAsset.isNotEmpty
+                                      ? qrAsset
+                                      : 'assets/QRIS.png',
+                                  fit: BoxFit.contain,
+                                ),
                               ),
                             ),
                           ),
@@ -301,12 +304,17 @@ class _PaymentPendingPageState extends State<PaymentPendingPage> {
                   _StepItem(
                     icon: Icons.circle,
                     label:
-                        'Tulis catatan atau kirim bukti via form catatan saat checkout.',
+                        'Pastikan akun transaksi anda sesuai dengan yang telah anda tulis untuk pengecekan.',
                   ),
                   _StepItem(
                     icon: Icons.circle,
                     label:
                         'Tunggu admin memverifikasi. Anda dapat memantau status pada menu Riwayat Transaksi.',
+                  ),
+                  _StepItem(
+                    icon: Icons.circle,
+                    label:
+                        'Segala bentuk nominal yang anda kirim akan berproses sesuai dengan ketentuan dan tidak dapat dikembalikan.',
                   ),
                 ],
               ),

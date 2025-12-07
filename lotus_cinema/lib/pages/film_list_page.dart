@@ -90,16 +90,18 @@ class _FilmListPageState extends State<FilmListPage> {
     if (width < 360) return 1;
     if (width < 600) return 2;
     if (width < 900) return 3;
-    return 4;
+    if (width < 1200) return 4;
+    return 5;
   }
 
   double _childAspectRatioForWidth(double width) {
-    // Rasio diperkecil (lebih tinggi) agar poster terlihat full & proporsional
-    // Nilai 0.58 berarti Lebar adalah 58% dari Tinggi.
-    if (width < 360) return 0.55;
-    if (width < 600) return 0.58;
-    if (width < 900) return 0.62;
-    return 0.65;
+    // Buat kartu adaptif: layar lebar tetap punya ruang ekstra di bawah poster
+    // sehingga teks tidak overflow saat poster mengecil.
+    if (width >= 1200) return 0.52;
+    if (width >= 900) return 0.54;
+    if (width >= 600) return 0.56;
+    if (width >= 360) return 0.5;
+    return 0.46;
   }
 
   /// Samakan cara resolving poster dengan halaman detail
@@ -367,12 +369,12 @@ class _FilmListPageState extends State<FilmListPage> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.stretch,
                                       children: [
-                                        // POSTER AREA (Flex lebih besar)
+                                        // POSTER AREA (masih dominan tapi memberi ruang teks)
                                         Expanded(
                                           flex: 4,
                                           child: _posterContent(film),
                                         ),
-                                        // TEXT AREA
+                                        // TEXT AREA (dibuat lebih lega agar tidak overflow)
                                         Expanded(
                                           flex: 2,
                                           child: Padding(
@@ -380,6 +382,8 @@ class _FilmListPageState extends State<FilmListPage> {
                                             child: Column(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
                                               children: [
                                                 // Judul
                                                 Text(
@@ -396,7 +400,7 @@ class _FilmListPageState extends State<FilmListPage> {
                                                         height: 1.2,
                                                       ),
                                                 ),
-                                                const Spacer(),
+                                                const SizedBox(height: 4),
                                                 // Info Tambahan
                                                 Row(
                                                   children: [
@@ -407,9 +411,9 @@ class _FilmListPageState extends State<FilmListPage> {
                                                         overflow: TextOverflow
                                                             .ellipsis,
                                                         style: TextStyle(
-                                                          fontSize: 11,
+                                                          fontSize: 12,
                                                           color:
-                                                              Colors.grey[600],
+                                                              Colors.white[600],
                                                         ),
                                                       ),
                                                     ),
@@ -421,13 +425,19 @@ class _FilmListPageState extends State<FilmListPage> {
                                                     Icon(Icons.schedule,
                                                         size: 12,
                                                         color:
-                                                            Colors.grey[500]),
+                                                            Colors.white[600]),
                                                     const SizedBox(width: 4),
-                                                    Text(
-                                                      '${_durationOf(film)} m',
-                                                      style: TextStyle(
-                                                        fontSize: 11,
-                                                        color: Colors.grey[600],
+                                                    Expanded(
+                                                      child: Text(
+                                                        '${_durationOf(film)} m',
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color:
+                                                              Colors.white[600],
+                                                        ),
                                                       ),
                                                     ),
                                                   ],
@@ -447,4 +457,8 @@ class _FilmListPageState extends State<FilmListPage> {
                 ),
     );
   }
+}
+
+extension on Color {
+  Color? operator [](int other) {}
 }
