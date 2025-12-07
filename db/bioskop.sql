@@ -788,18 +788,19 @@ CREATE TABLE `transaksi` (
   `customer_id` int(11) DEFAULT NULL,
   `kasir_id` int(11) DEFAULT NULL,
   `tanggal_transaksi` date DEFAULT NULL,
-  `total_harga` decimal(12,2) NOT NULL
+  `total_harga` decimal(12,2) NOT NULL,
+  `status` enum('pending','sukses') NOT NULL DEFAULT 'pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data untuk tabel `transaksi`
 --
 
-INSERT INTO `transaksi` (`transaksi_id`, `customer_id`, `kasir_id`, `tanggal_transaksi`, `total_harga`) VALUES
-(64, 11, 1, '2025-11-11', 100000.00),
-(65, 11, 1, '2025-11-11', 100000.00),
-(66, 12, 1, '2025-11-11', 100000.00),
-(67, 11, 1, '2025-11-30', 65000.00);
+INSERT INTO `transaksi` (`transaksi_id`, `customer_id`, `kasir_id`, `tanggal_transaksi`, `total_harga`, `status`) VALUES
+(64, 11, 1, '2025-11-11', 100000.00, 'sukses'),
+(65, 11, 1, '2025-11-11', 100000.00, 'sukses'),
+(66, 12, 1, '2025-11-11', 100000.00, 'sukses'),
+(67, 11, 1, '2025-11-30', 65000.00, 'sukses');
 
 -- --------------------------------------------------------
 
@@ -822,7 +823,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id_users`, `name`, `username`, `password`, `role`, `created_at`, `updated_at`) VALUES
-(1, 'Administrator', 'admin', '$2y$12$8i1Cdm42Hcps225y7sY9Vub0kGugHgdGXNqBJ38qRAjPR9U1FVLtO', 'admin', '2025-10-31 02:00:00', '2025-10-31 02:00:00'),
+(1, 'Administrator', 'admin', '$2y$12$YKId4tSpJuzk8p5uMycgE.mwLbsmxLCp/T7BskyuV2YXTnYxvBKJW', 'admin', '2025-10-31 02:00:00', '2025-10-31 02:00:00'),
 (5, 'Brian Evan', 'brian', '$2y$12$QKp3o6BFF1k70WO4XbmRlOzqPG6Jy00xr8E7kh2c4WBOMhiM6TUh.', 'customer', '2025-11-10 22:50:28', '2025-11-30 03:35:19'),
 (6, 'Dilla Ayu', 'dilla', '$2y$12$4H2LwY5PvZDM.dIhVMpY.eJ98AlufRlMnmS4p0.HKNq3/MOZRcKv.', 'customer', '2025-11-10 23:42:54', '2025-11-30 02:20:45');
 

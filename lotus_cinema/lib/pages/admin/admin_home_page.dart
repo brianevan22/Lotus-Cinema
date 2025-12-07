@@ -5,6 +5,7 @@ import '../../theme/bubble_container.dart';
 import '../film_list_page.dart';
 import '../login_page.dart';
 import '../settings_page.dart';
+import 'admin_transaction_list_page.dart';
 
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({super.key});
@@ -89,6 +90,24 @@ class _AdminHomePageState extends State<AdminHomePage> {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const FilmListPage()),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            elevation: 3,
+            margin: EdgeInsets.zero,
+            child: ListTile(
+              leading: Icon(Icons.receipt_long_outlined, color: primary),
+              title: const Text('Transaksi'),
+              subtitle:
+                  const Text('Pantau pembayaran pending & riwayat sukses'),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const AdminTransactionListPage()),
               ),
             ),
           ),

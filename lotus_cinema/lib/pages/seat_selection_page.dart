@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../api_service.dart';
-import 'checkout_success_page.dart';
+import 'payment_page.dart';
 import '../theme/app_theme.dart';
 
 class SeatSelectionPage extends StatefulWidget {
@@ -253,7 +253,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
     return _selected.map(_labelById).join(', ');
   }
 
-  Future<void> _checkout() async {
+  Future<void> _openPayment() async {
     if (_selected.isEmpty) return;
     if (_role != null && _role == 'admin') {
       if (!mounted) return;
@@ -271,62 +271,36 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
         throw Exception(
             'Customer belum tersinkron. Silakan login ulang agar akun disinkronkan.');
       }
-
-      // NOTE: sesuaikan customerId dengan user yang login
-      final res = await api.checkout(
-        customerId: storedCust,
-        jadwalId: widget.jadwalId,
-        kursiIds: _selected.toList(),
-      );
-
-      // Fallback label kursi supaya tidak "ID" lagi
-      String labels = '';
-      final rawList = res['kursi'];
-      if (rawList is List && rawList.isNotEmpty) {
-        final items = rawList
-            .map((e) => (e is Map ? e['nomor_kursi'] : null))
-            .where((x) => x != null && x.toString().isNotEmpty)
-            .map((x) => x.toString())
-            .toList();
-        labels = items.join(', ');
-      }
-      if (labels.isEmpty) {
-        labels = (res['kursi_labels'] ?? '').toString();
-      }
-      if (labels.isEmpty) {
-        labels = _selectedLabels;
-      }
-
-      final total = res['total_harga'] ?? _total;
-
-      final data = {
-        ...res,
-        'kursi_labels': labels,
-        'total_harga': total,
-        'kursi': (res['kursi'] is List && (res['kursi'] as List).isNotEmpty)
-            ? res['kursi']
-            : _selected
-                .map((id) => {
-                      'kursi_id': id,
-                      'nomor_kursi': _labelById(id),
-                      'harga': _priceOfId(id),
-                    })
-                .toList(),
-        'film_title': widget.filmTitle,
-        'studio_name': _jadwal?['nama_studio'],
-        'studio_id': _jadwal?['studio_id'] ?? widget.studioId,
-        'jadwal_tanggal': _jadwal?['tanggal'],
-        'jadwal_mulai': _jadwal?['jam_mulai'],
-        'jadwal_selesai': _jadwal?['jam_selesai'],
-        'purchase_time': DateTime.now().toIso8601String(),
-        'project_name': 'Lotus Cinema',
-      };
+      final seatDetails = _selected
+          .map((id) => {
+                'kursi_id': id,
+                'nomor_kursi': _labelById(id),
+                'harga': _priceOfId(id),
+              })
+          .toList();
 
       if (!mounted) return;
-      Navigator.pushReplacement(
+      final created = await Navigator.push<bool>(
         context,
-        MaterialPageRoute(builder: (_) => CheckoutSuccessPage(data: data)),
+        MaterialPageRoute(
+          builder: (_) => PaymentPage(
+            jadwalId: widget.jadwalId,
+            filmTitle: widget.filmTitle,
+            customerId: storedCust,
+            seatIds: _selected.toList(),
+            seatDetails: seatDetails,
+            totalAmount: _total,
+            jadwalInfo: _jadwal,
+            studioId: _jadwal?['studio_id'] ?? widget.studioId,
+            studioName: _jadwal?['nama_studio'],
+          ),
+        ),
       );
+
+      if (created == true) {
+        _selected.clear();
+        _load();
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -925,7 +899,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                   FilledButton.icon(
                     onPressed: (_selected.isEmpty || _role == 'admin')
                         ? null
-                        : _checkout,
+                        : _openPayment,
                     icon: const Icon(Icons.payment),
                     label: const Text('Checkout'),
                   ),

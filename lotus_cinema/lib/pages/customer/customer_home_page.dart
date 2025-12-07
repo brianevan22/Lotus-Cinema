@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../api_service.dart';
 import '../../theme/app_theme.dart';
-import '../../theme/bubble_container.dart';
 import '../film_list_page.dart';
 import '../login_page.dart';
 import '../settings_page.dart';
+import 'transaction_history_page.dart';
 
 class CustomerHomePage extends StatefulWidget {
   const CustomerHomePage({super.key});
@@ -89,6 +89,24 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const FilmListPage()),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            elevation: 3,
+            margin: EdgeInsets.zero,
+            child: ListTile(
+              leading: Icon(Icons.receipt_long_outlined, color: primary),
+              title: const Text('Riwayat Transaksi'),
+              subtitle:
+                  const Text('Pantau status pembayaran & cetak tiket berhasil'),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const CustomerTransactionHistoryPage()),
               ),
             ),
           ),

@@ -264,6 +264,9 @@ Route::post('/checkout', function (Request $r) {
         'kasir_id'    => 'nullable|integer',
         'client_time' => 'nullable|string', // optional ISO8601 dari klien
         'client_tz'   => 'nullable|string', // optional timezone klien
+        'payment_method' => 'nullable|string|max:50',
+        'payment_destination' => 'nullable|string|max:120',
+        'payment_account_name' => 'required|string|max:150',
     ]);
 
     // INPUT AWAL
@@ -490,8 +493,19 @@ Route::post('/checkout', function (Request $r) {
         return $data;
     };
 
+    $paymentMethod = $r->input('payment_method') ?: 'manual_transfer';
+    $paymentDestination = $r->input('payment_destination');
+    $paymentAccountName = trim((string)$r->input('payment_account_name'));
+    if ($paymentAccountName === '') {
+        abort(response()->json([
+            'message' => 'Nama pemilik rekening wajib diisi dan tidak boleh hanya spasi.',
+            'errors' => ['payment_account_name' => ['Nama pemilik rekening wajib diisi.']],
+        ], 422));
+    }
+
     return DB::transaction(function () use (
-        $ids, $customerForTrans, $canonId, $kasirId, $defaultPrice, $withTimestamps, $ensureKursiId, $filmId
+        $ids, $customerForTrans, $canonId, $kasirId, $defaultPrice, $withTimestamps, $ensureKursiId, $filmId,
+        $paymentMethod, $paymentDestination, $paymentAccountName
     ) {
         $kursiIds = array_map($ensureKursiId, $ids);
 
@@ -542,6 +556,10 @@ Route::post('/checkout', function (Request $r) {
             'kasir_id'          => $kasirId, // <- tersimpan sesuai waktu/request
             'tanggal_transaksi' => now(),
             'total_harga'       => $total,
+            'status'            => 'pending',
+            'payment_method'    => $paymentMethod,
+            'payment_destination' => $paymentDestination,
+            'payment_account_name' => $paymentAccountName,
         ];
         $trx   = $withTimestamps('transaksi', $trx);
         $trxId = DB::table('transaksi')->insertGetId($trx);
@@ -586,9 +604,14 @@ Route::post('/checkout', function (Request $r) {
             'kursi_terbeli' => $kursiIdList,
             'kursi'         => $kursiDetail,
             'kursi_labels'  => implode(', ', array_map(fn($d)=>$d['nomor_kursi'], $kursiDetail)),
+            'status'        => 'pending',
+            'payment_method' => $paymentMethod,
+            'payment_destination' => $paymentDestination,
         ]);
     });
 });
+Route::match(['patch', 'post'], '/transaksi/{id}/status', [TransaksiController::class, 'setStatus'])
+    ->whereNumber('id');
 Route::apiResource('users', UserController::class);
 /* ---------- ekstensi opsional ---------- */
 $append = __DIR__ . '/api.append.php';

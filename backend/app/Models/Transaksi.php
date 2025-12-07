@@ -17,7 +17,17 @@ class Transaksi extends Model
         'customer_id',
         'kasir_id',
         'tanggal_transaksi',
-        'total_harga'
+        'total_harga',
+        'status',
+        'payment_method',
+        'payment_destination',
+        'payment_account_name',
+        'paid_at',
+    ];
+
+    protected $casts = [
+        'tanggal_transaksi' => 'datetime',
+        'paid_at' => 'datetime',
     ];
 
     public function customer()

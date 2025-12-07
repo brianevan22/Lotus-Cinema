@@ -500,6 +500,9 @@ class ApiService {
     required int jadwalId,
     required List<int> kursiIds,
     int? kasirId,
+    String? paymentMethod,
+    String? paymentDestination,
+    required String paymentAccountName,
   }) async {
     final resolvedCustomer = customerId ?? await getStoredCustomerId();
     if (resolvedCustomer == null) {
@@ -517,11 +520,123 @@ class ApiService {
         if (kasirId != null) 'kasir_id': kasirId,
         'client_time': now.toIso8601String(),
         'client_tz': now.timeZoneName,
+        if (paymentMethod != null && paymentMethod.isNotEmpty)
+          'payment_method': paymentMethod,
+        if (paymentDestination != null && paymentDestination.isNotEmpty)
+          'payment_destination': paymentDestination,
+        'payment_account_name': paymentAccountName,
       });
       return _toMap(res.data);
     } on DioException catch (e) {
       throw _wrap(e);
     }
+  }
+
+  Future<PaginatedResponse> transactions({
+    int page = 1,
+    int perPage = 50,
+    String? status,
+    int? customerId,
+    bool onlyPending = false,
+  }) async {
+    final qp = <String, dynamic>{
+      'page': page,
+      'per_page': perPage,
+      if (status != null && status.isNotEmpty) 'status': status,
+      if (customerId != null) 'customer_id': customerId,
+      if (onlyPending) 'only_pending': 1,
+    };
+    try {
+      final res = await _dio.get('/transaksi', queryParameters: qp);
+      return PaginatedResponse.from(res.data);
+    } on DioException catch (e) {
+      throw _wrap(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> transactionDetail(int id) async {
+    try {
+      final res = await _dio.get('/transaksi/$id');
+      return _unwrapResourceMap(res.data);
+    } on DioException catch (e) {
+      throw _wrap(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> updateTransactionStatus(
+      int id, String status) async {
+    Future<Map<String, dynamic>> _sendPatch() async {
+      final res = await _dio.patch('/transaksi/$id/status', data: {
+        'status': status,
+      });
+      return _unwrapResourceMap(res.data);
+    }
+
+    try {
+      return await _sendPatch();
+    } on DioException catch (e) {
+      final shouldRetry = e.type == DioExceptionType.badResponse &&
+          (e.response?.statusCode == 405 || e.response?.statusCode == 404);
+      final connectionIssue = e.type == DioExceptionType.unknown ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.connectionError;
+      if (!(shouldRetry || connectionIssue)) {
+        throw _wrap(e);
+      }
+      try {
+        final res = await _dio.post('/transaksi/$id/status', data: {
+          'status': status,
+          '_method': 'PATCH',
+        });
+        return _unwrapResourceMap(res.data);
+      } on DioException catch (inner) {
+        throw _wrap(inner);
+      }
+    }
+  }
+
+  Map<String, dynamic> buildTicketPayloadFromTransaction(
+      Map<String, dynamic> trx) {
+    final kursiList = (trx['kursi'] is List)
+        ? List<Map<String, dynamic>>.from(
+            (trx['kursi'] as List)
+                .map((e) => e is Map ? Map<String, dynamic>.from(e) : null)
+                .whereType<Map<String, dynamic>>(),
+          )
+        : <Map<String, dynamic>>[];
+    final kursiLabels = kursiList
+        .map((e) => e['nomor_kursi']?.toString())
+        .whereType<String>()
+        .where((label) => label.trim().isNotEmpty)
+        .map((label) => label.trim())
+        .toList();
+
+    final jadwal = trx['jadwal'] is Map
+        ? Map<String, dynamic>.from(trx['jadwal'] as Map)
+        : <String, dynamic>{};
+    final studio = jadwal['studio'] is Map
+        ? Map<String, dynamic>.from(jadwal['studio'] as Map)
+        : <String, dynamic>{};
+    final film = trx['film'] is Map
+        ? Map<String, dynamic>.from(trx['film'] as Map)
+        : <String, dynamic>{};
+
+    return {
+      'transaksi_id': trx['transaksi_id'],
+      'film_title': film['judul'] ?? trx['film_title'] ?? '-',
+      'studio_name':
+          studio['nama_studio'] ?? 'Studio ${studio['studio_id'] ?? '-'}',
+      'studio_id': studio['studio_id'],
+      'jadwal_tanggal': jadwal['tanggal'],
+      'jadwal_mulai': jadwal['jam_mulai'],
+      'jadwal_selesai': jadwal['jam_selesai'],
+      'kursi': kursiList,
+      'kursi_labels': kursiLabels.join(', '),
+      'total_harga': trx['total_harga'],
+      'purchase_time': trx['paid_at'] ?? trx['tanggal_transaksi'],
+      'project_name': 'Lotus Cinema',
+      'status': trx['status'],
+    };
   }
 
   // ===== GENRES =====
@@ -691,6 +806,14 @@ class ApiService {
 
     if (d == null) return <String, dynamic>{};
     return {'value': d};
+  }
+
+  Map<String, dynamic> _unwrapResourceMap(dynamic payload) {
+    final map = _toMap(payload);
+    final data = map['data'];
+    if (data is Map<String, dynamic>) return Map<String, dynamic>.from(data);
+    if (data is Map) return Map<String, dynamic>.from(data);
+    return map;
   }
 
   String _extractRole(Map<String, dynamic> payload,
