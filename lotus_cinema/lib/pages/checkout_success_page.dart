@@ -417,101 +417,112 @@ class CheckoutSuccessPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppTheme.buildGradientAppBar(context, 'Checkout'),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Card(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          elevation: 6,
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: LinearGradient(
-                colors: [
-                  cs.primary.withOpacity(.12),
-                  cs.surface,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Card(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24)),
+                    elevation: 6,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        gradient: LinearGradient(
+                          colors: [
+                            cs.primary.withOpacity(.12),
+                            cs.surface,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          CircleAvatar(
+                            radius: 34,
+                            backgroundColor: primary.withOpacity(.15),
+                            child: Icon(Icons.check_rounded,
+                                color: primary, size: 40),
+                          ),
+                          const SizedBox(height: 18),
+                          Text(
+                            'Pembayaran Berhasil!',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: cs.onSurface,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Terima kasih telah melakukan pemesanan. Silakan cetak tiket Anda.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: cs.onSurfaceVariant),
+                          ),
+                          const SizedBox(height: 20),
+                          Divider(color: cs.outlineVariant.withOpacity(.4)),
+                          _infoRow('Transaksi ID', '#$trxId', cs),
+                          _infoRow('Total Bayar', 'Rp ${_formatRp(total)}', cs),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Kursi',
+                            style: TextStyle(
+                              color: cs.onSurface,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _seatChips(seats, cs),
+                          const SizedBox(height: 20),
+                          tickets.isEmpty
+                              ? Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: Text(
+                                    'Tiket akan muncul di sini setelah transaksi berhasil.',
+                                    style:
+                                        TextStyle(color: cs.onSurfaceVariant),
+                                  ),
+                                )
+                              : Column(
+                                  children: tickets
+                                      .asMap()
+                                      .entries
+                                      .map((entry) => _ticketCard(
+                                          entry.value, entry.key, cs))
+                                      .toList(),
+                                ),
+                          const SizedBox(height: 24),
+                          FilledButton.icon(
+                            onPressed: tickets.isEmpty
+                                ? null
+                                : () => _printTickets(context),
+                            icon: const Icon(Icons.print),
+                            label: const Text('Cetak Tiket'),
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: () =>
+                                Navigator.popUntil(context, (r) => r.isFirst),
+                            child: const Text('Kembali ke Home'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
               ),
             ),
-            padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                CircleAvatar(
-                  radius: 34,
-                  backgroundColor: primary.withOpacity(.15),
-                  child: Icon(Icons.check_rounded, color: primary, size: 40),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  'Pembayaran Berhasil!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: cs.onSurface,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Terima kasih telah melakukan pemesanan. Silakan cetak tiket Anda.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: cs.onSurfaceVariant),
-                ),
-                const SizedBox(height: 20),
-                Divider(color: cs.outlineVariant.withOpacity(.4)),
-                _infoRow('Transaksi ID', '#$trxId', cs),
-                _infoRow('Total Bayar', 'Rp ${_formatRp(total)}', cs),
-                const SizedBox(height: 12),
-                Text(
-                  'Kursi',
-                  style: TextStyle(
-                    color: cs.onSurface,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _seatChips(seats, cs),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: tickets.isEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Text(
-                              'Tiket akan muncul di sini setelah transaksi berhasil.',
-                              style: TextStyle(color: cs.onSurfaceVariant),
-                            ),
-                          )
-                        : Column(
-                            children: tickets
-                                .asMap()
-                                .entries
-                                .map((entry) =>
-                                    _ticketCard(entry.value, entry.key, cs))
-                                .toList(),
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed:
-                      tickets.isEmpty ? null : () => _printTickets(context),
-                  icon: const Icon(Icons.print),
-                  label: const Text('Cetak Tiket'),
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton(
-                  onPressed: () =>
-                      Navigator.popUntil(context, (r) => r.isFirst),
-                  child: const Text('Kembali ke Home'),
-                ),
-              ],
-            ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
