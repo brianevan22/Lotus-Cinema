@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 07 Des 2025 pada 01.50
+-- Waktu pembuatan: 07 Des 2025 pada 05.10
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.2.12
 
@@ -92,7 +92,9 @@ INSERT INTO `detail_transaksi` (`detail_id`, `transaksi_id`, `tiket_id`, `film_i
 (120, 66, 264, 2, 100000.00),
 (121, 67, 425, 5, 65000.00),
 (129, 75, 392, 1, 75000.00),
-(130, 76, 426, 5, 65000.00);
+(130, 76, 426, 5, 65000.00),
+(131, 77, 393, 1, 75000.00),
+(132, 77, 394, 1, 75000.00);
 
 -- --------------------------------------------------------
 
@@ -650,8 +652,8 @@ INSERT INTO `tiket` (`tiket_id`, `jadwal_id`, `kursi_id`, `harga`, `status`) VAL
 (306, 16, 135, 60000.00, 'tersedia'),
 (391, 13, 170, 75000.00, 'terjual'),
 (392, 13, 171, 75000.00, 'terjual'),
-(393, 13, 172, 75000.00, 'tersedia'),
-(394, 13, 173, 75000.00, 'tersedia'),
+(393, 13, 172, 75000.00, 'terjual'),
+(394, 13, 173, 75000.00, 'terjual'),
 (395, 13, 174, 75000.00, 'tersedia'),
 (396, 13, 175, 75000.00, 'tersedia'),
 (397, 13, 176, 75000.00, 'tersedia'),
@@ -814,7 +816,8 @@ INSERT INTO `transaksi` (`transaksi_id`, `customer_id`, `kasir_id`, `tanggal_tra
 (66, 12, 1, '2025-11-11 00:00:00', 100000.00, 'sukses', NULL, NULL, NULL, NULL),
 (67, 11, 1, '2025-11-30 00:00:00', 65000.00, 'sukses', NULL, NULL, NULL, NULL),
 (75, 13, 1, '2025-12-07 00:17:18', 75000.00, 'sukses', 'QRIS', 'ID1023241444042', 'Amarrazan Yuka', '2025-12-06 17:17:18'),
-(76, 13, 1, '2025-12-07 00:42:25', 65000.00, 'sukses', 'BRI', '033401001122334', 'Amarrazan Yuka', '2025-12-06 17:44:35');
+(76, 13, 1, '2025-12-07 00:42:25', 65000.00, 'sukses', 'BRI', '033401001122334', 'Amarrazan Yuka', '2025-12-06 17:44:35'),
+(77, 12, 1, '2025-12-07 01:39:33', 150000.00, 'sukses', 'QRIS', 'ID1023241444042', 'Dilla Ayu', '2025-12-06 21:07:49');
 
 -- --------------------------------------------------------
 
@@ -1000,7 +1003,7 @@ ALTER TABLE `customer`
 -- AUTO_INCREMENT untuk tabel `detail_transaksi`
 --
 ALTER TABLE `detail_transaksi`
-  MODIFY `detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=131;
+  MODIFY `detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=133;
 
 --
 -- AUTO_INCREMENT untuk tabel `failed_jobs`
@@ -1072,7 +1075,7 @@ ALTER TABLE `tiket`
 -- AUTO_INCREMENT untuk tabel `transaksi`
 --
 ALTER TABLE `transaksi`
-  MODIFY `transaksi_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
+  MODIFY `transaksi_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78;
 
 --
 -- AUTO_INCREMENT untuk tabel `users`
