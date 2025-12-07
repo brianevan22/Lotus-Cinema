@@ -97,10 +97,10 @@ class _FilmListPageState extends State<FilmListPage> {
   double _childAspectRatioForWidth(double width) {
     // Buat kartu adaptif: layar lebar tetap punya ruang ekstra di bawah poster
     // sehingga teks tidak overflow saat poster mengecil.
-    if (width >= 1200) return 0.52;
-    if (width >= 900) return 0.54;
-    if (width >= 600) return 0.56;
-    if (width >= 360) return 0.5;
+    if (width >= 1200) return 0.55;
+    if (width >= 900) return 0.53;
+    if (width >= 600) return 0.51;
+    if (width >= 360) return 0.49;
     return 0.46;
   }
 
@@ -371,79 +371,75 @@ class _FilmListPageState extends State<FilmListPage> {
                                       children: [
                                         // POSTER AREA (masih dominan tapi memberi ruang teks)
                                         Expanded(
-                                          flex: 4,
+                                          flex: 5,
                                           child: _posterContent(film),
                                         ),
-                                        // TEXT AREA (dibuat lebih lega agar tidak overflow)
-                                        Expanded(
-                                          flex: 2,
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(10),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.end,
-                                              children: [
-                                                // Judul
-                                                Text(
-                                                  _titleOf(film),
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .titleSmall
-                                                      ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                        height: 1.2,
-                                                      ),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                // Info Tambahan
-                                                Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: Text(
-                                                        _genreLabel(film),
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: TextStyle(
-                                                          fontSize: 12,
-                                                          color:
-                                                              Colors.white[600],
-                                                        ),
+                                        // TEXT AREA (tinggi mengikuti konten agar habis tepat di bawah durasi)
+                                        Padding(
+                                          padding: const EdgeInsets.fromLTRB(
+                                              12, 8, 12, 12),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              // Judul
+                                              Text(
+                                                _titleOf(film),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleSmall
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      height: 1.15,
+                                                    ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              // Info Tambahan
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      _genreLabel(film),
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.white
+                                                            .withOpacity(0.7),
                                                       ),
                                                     ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 2),
-                                                Row(
-                                                  children: [
-                                                    Icon(Icons.schedule,
-                                                        size: 12,
-                                                        color:
-                                                            Colors.white[600]),
-                                                    const SizedBox(width: 4),
-                                                    Expanded(
-                                                      child: Text(
-                                                        '${_durationOf(film)} m',
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: TextStyle(
-                                                          fontSize: 12,
-                                                          color:
-                                                              Colors.white[600],
-                                                        ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Row(
+                                                children: [
+                                                  Icon(Icons.schedule,
+                                                      size: 12,
+                                                      color: Colors.white
+                                                          .withOpacity(0.7)),
+                                                  const SizedBox(width: 4),
+                                                  Expanded(
+                                                    child: Text(
+                                                      '${_durationOf(film)} m',
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.white
+                                                            .withOpacity(0.7),
                                                       ),
                                                     ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],
@@ -457,8 +453,4 @@ class _FilmListPageState extends State<FilmListPage> {
                 ),
     );
   }
-}
-
-extension on Color {
-  Color? operator [](int other) {}
 }
