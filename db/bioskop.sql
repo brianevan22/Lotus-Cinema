@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 30 Nov 2025 pada 16.52
+-- Waktu pembuatan: 07 Des 2025 pada 01.50
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.2.12
 
@@ -65,7 +65,8 @@ CREATE TABLE `customer` (
 
 INSERT INTO `customer` (`customer_id`, `id_users`, `nama`, `email`, `no_hp`) VALUES
 (11, 5, 'Brian Evan', 'brianevan22@gmail.com', '085108815888'),
-(12, 6, 'Dilla Ayu', 'dillaayu@gmail.com', '085806844421');
+(12, 6, 'Dilla Ayu', 'dillaayu@gmail.com', '085806844421'),
+(13, 7, 'Amarrazan Yuka', 'amarrazanyn@gmail.com', '085645567856');
 
 -- --------------------------------------------------------
 
@@ -89,7 +90,9 @@ INSERT INTO `detail_transaksi` (`detail_id`, `transaksi_id`, `tiket_id`, `film_i
 (118, 64, 262, 2, 100000.00),
 (119, 65, 263, 2, 100000.00),
 (120, 66, 264, 2, 100000.00),
-(121, 67, 425, 5, 65000.00);
+(121, 67, 425, 5, 65000.00),
+(129, 75, 392, 1, 75000.00),
+(130, 76, 426, 5, 65000.00);
 
 -- --------------------------------------------------------
 
@@ -450,7 +453,12 @@ CREATE TABLE `migrations` (
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (1, '0001_01_01_000000_create_users_table', 1),
 (2, '0001_01_01_000001_create_cache_table', 1),
-(3, '0001_01_01_000002_create_jobs_table', 1);
+(3, '0001_01_01_000002_create_jobs_table', 1),
+(4, '2025_12_06_000001_add_payment_columns_to_transaksi_table', 2),
+(5, '2025_12_07_000002_expand_status_enum_on_transaksi_table', 3),
+(6, '2025_12_07_000003_alter_tanggal_transaksi_to_datetime', 4),
+(7, '2025_12_07_000004_rename_payment_note_to_payment_account_name', 5),
+(8, '2025_12_07_000005_drop_payment_reference_column', 6);
 
 -- --------------------------------------------------------
 
@@ -531,8 +539,8 @@ CREATE TABLE `tiket` (
 --
 
 INSERT INTO `tiket` (`tiket_id`, `jadwal_id`, `kursi_id`, `harga`, `status`) VALUES
-(11, 2, 1, 55000.00, 'tersedia'),
-(12, 2, 2, 55000.00, 'tersedia'),
+(11, 2, 1, 55000.00, 'terjual'),
+(12, 2, 2, 55000.00, 'terjual'),
 (13, 2, 3, 55000.00, 'tersedia'),
 (14, 2, 4, 55000.00, 'tersedia'),
 (15, 2, 5, 55000.00, 'tersedia'),
@@ -598,7 +606,7 @@ INSERT INTO `tiket` (`tiket_id`, `jadwal_id`, `kursi_id`, `harga`, `status`) VAL
 (262, 16, 15, 60000.00, 'terjual'),
 (263, 16, 78, 60000.00, 'terjual'),
 (264, 16, 79, 60000.00, 'terjual'),
-(265, 16, 80, 60000.00, 'tersedia'),
+(265, 16, 80, 60000.00, 'terjual'),
 (266, 16, 81, 100000.00, 'tersedia'),
 (267, 16, 82, 100000.00, 'tersedia'),
 (268, 16, 83, 100000.00, 'tersedia'),
@@ -640,8 +648,8 @@ INSERT INTO `tiket` (`tiket_id`, `jadwal_id`, `kursi_id`, `harga`, `status`) VAL
 (304, 16, 133, 60000.00, 'tersedia'),
 (305, 16, 134, 60000.00, 'tersedia'),
 (306, 16, 135, 60000.00, 'tersedia'),
-(391, 13, 170, 75000.00, 'tersedia'),
-(392, 13, 171, 75000.00, 'tersedia'),
+(391, 13, 170, 75000.00, 'terjual'),
+(392, 13, 171, 75000.00, 'terjual'),
 (393, 13, 172, 75000.00, 'tersedia'),
 (394, 13, 173, 75000.00, 'tersedia'),
 (395, 13, 174, 75000.00, 'tersedia'),
@@ -675,7 +683,7 @@ INSERT INTO `tiket` (`tiket_id`, `jadwal_id`, `kursi_id`, `harga`, `status`) VAL
 (423, 13, 202, 75000.00, 'tersedia'),
 (424, 13, 203, 75000.00, 'tersedia'),
 (425, 3, 102, 65000.00, 'terjual'),
-(426, 3, 103, 65000.00, 'tersedia'),
+(426, 3, 103, 65000.00, 'terjual'),
 (427, 3, 104, 65000.00, 'tersedia'),
 (428, 3, 105, 65000.00, 'tersedia'),
 (429, 3, 106, 65000.00, 'tersedia'),
@@ -708,9 +716,9 @@ INSERT INTO `tiket` (`tiket_id`, `jadwal_id`, `kursi_id`, `harga`, `status`) VAL
 (456, 3, 133, 65000.00, 'tersedia'),
 (457, 3, 134, 65000.00, 'tersedia'),
 (458, 3, 135, 65000.00, 'tersedia'),
-(459, 14, 102, 70000.00, 'tersedia'),
-(460, 14, 103, 70000.00, 'tersedia'),
-(461, 14, 104, 70000.00, 'tersedia'),
+(459, 14, 102, 70000.00, 'terjual'),
+(460, 14, 103, 70000.00, 'terjual'),
+(461, 14, 104, 70000.00, 'terjual'),
 (462, 14, 105, 70000.00, 'tersedia'),
 (463, 14, 106, 70000.00, 'tersedia'),
 (464, 14, 107, 70000.00, 'tersedia'),
@@ -787,20 +795,26 @@ CREATE TABLE `transaksi` (
   `transaksi_id` int(11) NOT NULL,
   `customer_id` int(11) DEFAULT NULL,
   `kasir_id` int(11) DEFAULT NULL,
-  `tanggal_transaksi` date DEFAULT NULL,
+  `tanggal_transaksi` datetime DEFAULT NULL,
   `total_harga` decimal(12,2) NOT NULL,
-  `status` enum('pending','sukses') NOT NULL DEFAULT 'pending'
+  `status` enum('pending','sukses','batal') NOT NULL DEFAULT 'pending',
+  `payment_method` varchar(50) DEFAULT NULL,
+  `payment_destination` varchar(120) DEFAULT NULL,
+  `payment_account_name` varchar(150) DEFAULT NULL,
+  `paid_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data untuk tabel `transaksi`
 --
 
-INSERT INTO `transaksi` (`transaksi_id`, `customer_id`, `kasir_id`, `tanggal_transaksi`, `total_harga`, `status`) VALUES
-(64, 11, 1, '2025-11-11', 100000.00, 'sukses'),
-(65, 11, 1, '2025-11-11', 100000.00, 'sukses'),
-(66, 12, 1, '2025-11-11', 100000.00, 'sukses'),
-(67, 11, 1, '2025-11-30', 65000.00, 'sukses');
+INSERT INTO `transaksi` (`transaksi_id`, `customer_id`, `kasir_id`, `tanggal_transaksi`, `total_harga`, `status`, `payment_method`, `payment_destination`, `payment_account_name`, `paid_at`) VALUES
+(64, 11, 1, '2025-11-11 00:00:00', 100000.00, 'sukses', NULL, NULL, NULL, NULL),
+(65, 11, 1, '2025-11-11 00:00:00', 100000.00, 'sukses', NULL, NULL, NULL, NULL),
+(66, 12, 1, '2025-11-11 00:00:00', 100000.00, 'sukses', NULL, NULL, NULL, NULL),
+(67, 11, 1, '2025-11-30 00:00:00', 65000.00, 'sukses', NULL, NULL, NULL, NULL),
+(75, 13, 1, '2025-12-07 00:17:18', 75000.00, 'sukses', 'QRIS', 'ID1023241444042', 'Amarrazan Yuka', '2025-12-06 17:17:18'),
+(76, 13, 1, '2025-12-07 00:42:25', 65000.00, 'sukses', 'BRI', '033401001122334', 'Amarrazan Yuka', '2025-12-06 17:44:35');
 
 -- --------------------------------------------------------
 
@@ -825,7 +839,8 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id_users`, `name`, `username`, `password`, `role`, `created_at`, `updated_at`) VALUES
 (1, 'Administrator', 'admin', '$2y$12$YKId4tSpJuzk8p5uMycgE.mwLbsmxLCp/T7BskyuV2YXTnYxvBKJW', 'admin', '2025-10-31 02:00:00', '2025-10-31 02:00:00'),
 (5, 'Brian Evan', 'brian', '$2y$12$QKp3o6BFF1k70WO4XbmRlOzqPG6Jy00xr8E7kh2c4WBOMhiM6TUh.', 'customer', '2025-11-10 22:50:28', '2025-11-30 03:35:19'),
-(6, 'Dilla Ayu', 'dilla', '$2y$12$4H2LwY5PvZDM.dIhVMpY.eJ98AlufRlMnmS4p0.HKNq3/MOZRcKv.', 'customer', '2025-11-10 23:42:54', '2025-11-30 02:20:45');
+(6, 'Dilla Ayu', 'dilla', '$2y$12$4H2LwY5PvZDM.dIhVMpY.eJ98AlufRlMnmS4p0.HKNq3/MOZRcKv.', 'customer', '2025-11-10 23:42:54', '2025-11-30 02:20:45'),
+(7, 'Amarrazan Yuka', 'amarrazan', '$2y$12$VvNSd/TJNGyvxkcDdjoRYuc4UqSYinMBLTB85lqdGTejo4QnidR1a', 'customer', '2025-12-06 08:32:18', '2025-12-06 08:32:18');
 
 --
 -- Indexes for dumped tables
@@ -979,13 +994,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT untuk tabel `customer`
 --
 ALTER TABLE `customer`
-  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT untuk tabel `detail_transaksi`
 --
 ALTER TABLE `detail_transaksi`
-  MODIFY `detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=122;
+  MODIFY `detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=131;
 
 --
 -- AUTO_INCREMENT untuk tabel `failed_jobs`
@@ -1039,7 +1054,7 @@ ALTER TABLE `kursi`
 -- AUTO_INCREMENT untuk tabel `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT untuk tabel `studio`
@@ -1057,13 +1072,13 @@ ALTER TABLE `tiket`
 -- AUTO_INCREMENT untuk tabel `transaksi`
 --
 ALTER TABLE `transaksi`
-  MODIFY `transaksi_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
+  MODIFY `transaksi_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
 
 --
 -- AUTO_INCREMENT untuk tabel `users`
 --
 ALTER TABLE `users`
-  MODIFY `id_users` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_users` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)
