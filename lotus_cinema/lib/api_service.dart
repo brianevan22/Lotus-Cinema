@@ -65,7 +65,7 @@ class ApiService {
   late final String _effectiveBaseUrl;
 
   static const _defaultBackend =
-      'https://laravel-lotuscinema-production.up.railway.app';
+      'https://127.0.0.1:8000'; //sesuaikan local atau yang sudah hosting
 
   static String suggestBaseUrl() {
     if (kIsWeb) return _defaultBackend;
