@@ -92,6 +92,31 @@ class _AdminTransactionListPageState extends State<AdminTransactionListPage>
     }
   }
 
+  Future<void> _confirmCancel(int id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Batalkan Transaksi?'),
+        content: const Text(
+            'Tindakan ini akan membatalkan transaksi dan kursi akan tersedia kembali.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Tidak'),
+          ),
+          FilledButton.tonal(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(foregroundColor: Colors.redAccent),
+            child: const Text('Ya, Batalkan'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      _changeStatus(id, 'batal');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -203,27 +228,22 @@ class _AdminTransactionListPageState extends State<AdminTransactionListPage>
                                     const SizedBox(height: 12),
                                     Row(
                                       children: [
-                                        if ((status ?? '').toLowerCase() ==
-                                            'pending')
-                                          Expanded(
-                                            child: OutlinedButton(
-                                              onPressed: () => _changeStatus(
-                                                  trx['transaksi_id'],
-                                                  'sukses'),
-                                              child:
-                                                  const Text('Tandai Sukses'),
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            onPressed: () => _changeStatus(
+                                              trx['transaksi_id'],
+                                              (status ?? '').toLowerCase() ==
+                                                      'pending'
+                                                  ? 'sukses'
+                                                  : 'pending',
                                             ),
-                                          )
-                                        else
-                                          Expanded(
-                                            child: OutlinedButton(
-                                              onPressed: () => _changeStatus(
-                                                  trx['transaksi_id'],
-                                                  'pending'),
-                                              child: const Text(
-                                                  'Kembalikan Pending'),
-                                            ),
+                                            child: Text(
+                                                (status ?? '').toLowerCase() ==
+                                                        'pending'
+                                                    ? 'Tandai Sukses'
+                                                    : 'Kembalikan Pending'),
                                           ),
+                                        ),
                                         const SizedBox(width: 12),
                                         Expanded(
                                           child: FilledButton(
@@ -250,6 +270,24 @@ class _AdminTransactionListPageState extends State<AdminTransactionListPage>
                                         ),
                                       ],
                                     ),
+                                    if ((status ?? '').toLowerCase() ==
+                                        'pending') ...[
+                                      const SizedBox(height: 8),
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: TextButton.icon(
+                                          onPressed: () => _confirmCancel(
+                                              trx['transaksi_id']),
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: Colors.redAccent,
+                                          ),
+                                          icon:
+                                              const Icon(Icons.cancel_outlined),
+                                          label:
+                                              const Text('Batalkan Transaksi'),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),

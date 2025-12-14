@@ -36,7 +36,7 @@ class SettingsPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Versi 1.0.1',
+                  'Versi 1.0.0',
                   style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
                 ),
               ],

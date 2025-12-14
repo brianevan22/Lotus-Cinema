@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import '../api_service.dart';
 import '../theme/app_theme.dart';
 
@@ -15,11 +16,51 @@ class _PaymentPendingPageState extends State<PaymentPendingPage> {
   final api = ApiService();
   late Map<String, dynamic> _data;
   bool _cancelling = false;
+  final DateFormat _dateFormat = DateFormat('dd MMM yyyy • HH:mm:ss');
+  bool _initialLoading = false;
+  bool _refreshing = false;
 
   @override
   void initState() {
     super.initState();
     _data = Map<String, dynamic>.from(widget.data);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshFromServer(initial: true);
+    });
+  }
+
+  int? get _transaksiId {
+    final raw = _data['transaksi_id'];
+    if (raw is int) return raw;
+    if (raw is String) return int.tryParse(raw);
+    return null;
+  }
+
+  String get _statusValue => (_data['status'] ?? '').toString().toLowerCase();
+  bool get _isPending => _statusValue.isEmpty || _statusValue == 'pending';
+  bool get _isSuccess =>
+      _statusValue == 'sukses' ||
+      _statusValue == 'success' ||
+      _statusValue == 'selesai';
+  bool get _isCancelled =>
+      _statusValue == 'batal' ||
+      _statusValue == 'cancel' ||
+      _statusValue == 'canceled';
+  String get _statusLabel {
+    if (_isPending) return 'Pending';
+    if (_isSuccess) return 'Sukses';
+    if (_isCancelled) return 'Dibatalkan';
+    return (_data['status'] ?? '').toString();
+  }
+
+  String get _statusDescription {
+    if (_isPending) {
+      return 'Admin akan memverifikasi pembayaran Anda.\nSetelah status berubah menjadi sukses, tiket dapat dicetak dari menu riwayat transaksi.';
+    }
+    if (_isSuccess) {
+      return 'Pembayaran telah dikonfirmasi. Anda dapat mencetak tiket dari menu riwayat transaksi.';
+    }
+    return 'Transaksi ini telah dibatalkan. Anda dapat melakukan pemesanan ulang bila masih ingin melanjutkan.';
   }
 
   Map<String, dynamic> get _paymentOption {
@@ -41,11 +82,6 @@ class _PaymentPendingPageState extends State<PaymentPendingPage> {
       'note':
           'Pastikan nama rekening pengirim sesuai data yang Anda isi saat checkout.',
     };
-  }
-
-  bool get _isPending {
-    final status = (_data['status'] ?? '').toString().toLowerCase();
-    return status.isEmpty || status == 'pending';
   }
 
   String _methodDisplayName(String method) {
@@ -105,9 +141,49 @@ class _PaymentPendingPageState extends State<PaymentPendingPage> {
     }
   }
 
-  void _goHome() {
-    if (!mounted) return;
-    Navigator.of(context).popUntil((route) => route.isFirst);
+  String _formatDateTime(dynamic raw) {
+    DateTime? dt;
+    if (raw is DateTime) {
+      dt = raw;
+    } else if (raw is String) {
+      if (raw.trim().isEmpty) return '-';
+      dt = DateTime.tryParse(raw.trim());
+    } else if (raw is int) {
+      dt = DateTime.fromMillisecondsSinceEpoch(raw);
+    }
+    if (dt == null) return '-';
+    return _dateFormat.format(dt.toLocal());
+  }
+
+  Future<void> _refreshFromServer({bool initial = false}) async {
+    final trxId = _transaksiId;
+    if (trxId == null) return;
+    if (initial) {
+      setState(() {
+        _initialLoading = true;
+        _refreshing = true;
+      });
+    } else {
+      setState(() => _refreshing = true);
+    }
+    try {
+      final detail = await api.transactionDetail(trxId);
+      if (!mounted) return;
+      setState(() {
+        _data = {..._data, ...detail};
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memuat status terbaru: $e')),
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _refreshing = false;
+        if (initial) _initialLoading = false;
+      });
+    }
   }
 
   @override
@@ -123,219 +199,232 @@ class _PaymentPendingPageState extends State<PaymentPendingPage> {
     final senderAccountName =
         (_data['payment_account_name'] ?? '').toString().trim();
 
-    return Scaffold(
-      backgroundColor: cs.background,
-      appBar: AppTheme.buildGradientAppBar(context, 'Menunggu Pembayaran'),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: LinearGradient(
-                colors: [cs.primary, cs.primary.withOpacity(.6)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+    final content = ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(20),
+      children: [
+        if (_refreshing && !_initialLoading)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: LinearProgressIndicator(minHeight: 3),
+          ),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              colors: [cs.primary, cs.primary.withOpacity(.6)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Status Pembayaran',
+                  style: TextStyle(color: Colors.white70)),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(
+                      _isSuccess
+                          ? Icons.check_circle
+                          : (_isPending ? Icons.schedule : Icons.highlight_off),
+                      color: Colors.white),
+                  const SizedBox(width: 8),
+                  Text(
+                    _statusLabel,
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(color: Colors.white),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _statusDescription,
+                style: const TextStyle(color: Colors.white70),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        Card(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          elevation: 3,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Status Pembayaran',
-                    style: TextStyle(color: Colors.white70)),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(_isPending ? Icons.schedule : Icons.highlight_off,
-                        color: Colors.white),
-                    const SizedBox(width: 8),
-                    Text(
-                      _isPending ? 'Pending' : 'Dibatalkan',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall
-                          ?.copyWith(color: Colors.white),
-                    ),
-                  ],
+                Text('Detail Pembayaran',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 12),
+                _infoRow(
+                    'No. Transaksi', '#${_data['transaksi_id'] ?? '-'}', cs),
+                _infoRow('Total Bayar',
+                    'Rp ${_formatCurrency(_data['total_harga'])}', cs,
+                    highlight: true),
+                _infoRow('Metode', title, cs),
+                _infoRow('Waktu Transaksi',
+                    _formatDateTime(_data['tanggal_transaksi']), cs),
+                _infoRow(
+                    'Waktu Pembayaran', _formatDateTime(_data['paid_at']), cs),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: cs.surfaceVariant.withOpacity(.35),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isQris
+                            ? 'ID Merchant / QRIS Lotus Cinema'
+                            : 'Nomor Rekening',
+                        style:
+                            TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              account,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: cs.onSurface,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: account == '-' || account.isEmpty
+                                ? null
+                                : () => _copyText(account),
+                            icon: const Icon(Icons.copy, size: 18),
+                          ),
+                        ],
+                      ),
+                      Text('a.n. $owner',
+                          style: TextStyle(color: cs.onSurfaceVariant)),
+                      if (senderAccountName.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text('Atas nama pengirim',
+                            style: TextStyle(
+                                fontSize: 12, color: cs.onSurfaceVariant)),
+                        Text(
+                          senderAccountName,
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700, color: cs.onSurface),
+                        ),
+                      ],
+                      if (note != null && note.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(note,
+                            style: TextStyle(
+                                fontSize: 12, color: cs.onSurfaceVariant)),
+                      ],
+                      if (isQris) ...[
+                        const SizedBox(height: 14),
+                        Center(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(24),
+                            child: Container(
+                              width: 220,
+                              height: 310,
+                              color: Colors.white,
+                              child: Image.asset(
+                                qrAsset != null && qrAsset.isNotEmpty
+                                    ? qrAsset
+                                    : 'assets/QRIS.png',
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                            'Tunjukkan / scan QR ini pada aplikasi bank/e-wallet.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                fontSize: 12, color: cs.onSurfaceVariant)),
+                      ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  _isPending
-                      ? 'Admin akan memverifikasi pembayaran Anda.\nSetelah status berubah menjadi sukses, tiket dapat dicetak dari menu riwayat transaksi.'
-                      : 'Transaksi ini telah dibatalkan. Anda dapat melakukan pemesanan ulang bila masih ingin melanjutkan.',
-                  style: const TextStyle(color: Colors.white70),
+                if ((_data['seat_labels'] ?? '').toString().isNotEmpty)
+                  _infoRow('Kursi', _data['seat_labels'].toString(), cs),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text('Catatan Transaksi:',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                SizedBox(height: 8),
+                _StepItem(
+                  icon: Icons.circle,
+                  label:
+                      'Transfer sesuai nominal ke rekening / QRIS yang dipilih.',
+                ),
+                _StepItem(
+                  icon: Icons.circle,
+                  label:
+                      'Pastikan akun transaksi anda sesuai dengan yang telah anda tulis untuk pengecekan.',
+                ),
+                _StepItem(
+                  icon: Icons.circle,
+                  label:
+                      'Tunggu admin memverifikasi paling lambat 1 jam. Anda dapat memantau status pada menu Riwayat Transaksi.',
+                ),
+                _StepItem(
+                  icon: Icons.circle,
+                  label:
+                      'Segala bentuk nominal yang anda kirim akan diproses sesuai dengan ketentuan dan tidak dapat dikembalikan.',
+                ),
+                _StepItem(
+                  icon: Icons.circle,
+                  label:
+                      'Jika tidak segera melakukan pembayaran paling lambat 1 jam, transaksi akan dibatalkan.',
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
-          Card(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            elevation: 3,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Detail Pembayaran',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 12),
-                  _infoRow(
-                      'No. Transaksi', '#${_data['transaksi_id'] ?? '-'}', cs),
-                  _infoRow('Total Bayar',
-                      'Rp ${_formatCurrency(_data['total_harga'])}', cs,
-                      highlight: true),
-                  _infoRow('Metode', title, cs),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: cs.surfaceVariant.withOpacity(.35),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isQris
-                              ? 'ID Merchant / QRIS Lotus Cinema'
-                              : 'Nomor Rekening',
-                          style: TextStyle(
-                              fontSize: 13, color: cs.onSurfaceVariant),
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                account,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: cs.onSurface,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: account == '-' || account.isEmpty
-                                  ? null
-                                  : () => _copyText(account),
-                              icon: const Icon(Icons.copy, size: 18),
-                            ),
-                          ],
-                        ),
-                        Text('a.n. $owner',
-                            style: TextStyle(color: cs.onSurfaceVariant)),
-                        if (senderAccountName.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Text('Atas nama pengirim',
-                              style: TextStyle(
-                                  fontSize: 12, color: cs.onSurfaceVariant)),
-                          Text(
-                            senderAccountName,
-                            style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: cs.onSurface),
-                          ),
-                        ],
-                        if (note != null && note.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Text(note,
-                              style: TextStyle(
-                                  fontSize: 12, color: cs.onSurfaceVariant)),
-                        ],
-                        if (isQris) ...[
-                          const SizedBox(height: 14),
-                          Center(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(24),
-                              child: Container(
-                                width: 220,
-                                height: 310,
-                                color: Colors.white,
-                                child: Image.asset(
-                                  qrAsset != null && qrAsset.isNotEmpty
-                                      ? qrAsset
-                                      : 'assets/QRIS.png',
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                              'Tunjukkan / scan QR ini pada aplikasi bank/e-wallet.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  fontSize: 12, color: cs.onSurfaceVariant)),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  if ((_data['seat_labels'] ?? '').toString().isNotEmpty)
-                    _infoRow('Kursi', _data['seat_labels'].toString(), cs),
-                ],
-              ),
+        ),
+      ],
+    );
+
+    return Scaffold(
+      backgroundColor: cs.background,
+      appBar: AppTheme.buildGradientAppBar(context, 'Menunggu Pembayaran'),
+      body: _initialLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: () => _refreshFromServer(),
+              child: content,
             ),
-          ),
-          const SizedBox(height: 16),
-          Card(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text('Langkah penyelesaian:',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                  SizedBox(height: 8),
-                  _StepItem(
-                    icon: Icons.circle,
-                    label:
-                        'Transfer sesuai nominal ke rekening / QRIS yang dipilih.',
-                  ),
-                  _StepItem(
-                    icon: Icons.circle,
-                    label:
-                        'Pastikan akun transaksi anda sesuai dengan yang telah anda tulis untuk pengecekan.',
-                  ),
-                  _StepItem(
-                    icon: Icons.circle,
-                    label:
-                        'Tunggu admin memverifikasi. Anda dapat memantau status pada menu Riwayat Transaksi.',
-                  ),
-                  _StepItem(
-                    icon: Icons.circle,
-                    label:
-                        'Segala bentuk nominal yang anda kirim akan berproses sesuai dengan ketentuan dan tidak dapat dikembalikan.',
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              FilledButton.icon(
-                onPressed: _goHome,
-                icon: const Icon(Icons.home),
-                label: const Text('Kembali ke Home'),
-              ),
-              const SizedBox(height: 10),
-              if (_isPending)
-                OutlinedButton.icon(
+      bottomNavigationBar: _isPending
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: OutlinedButton.icon(
                   onPressed: _cancelling ? null : _cancelPayment,
                   icon: _cancelling
                       ? const SizedBox(
@@ -346,10 +435,9 @@ class _PaymentPendingPageState extends State<PaymentPendingPage> {
                       : const Icon(Icons.cancel_schedule_send),
                   label: const Text('Batalkan Pembayaran'),
                 ),
-            ],
-          ),
-        ),
-      ),
+              ),
+            )
+          : null,
     );
   }
 

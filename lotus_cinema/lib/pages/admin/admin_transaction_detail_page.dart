@@ -73,6 +73,31 @@ class _AdminTransactionDetailPageState
     }
   }
 
+  Future<void> _confirmCancel() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Batalkan Transaksi?'),
+        content: const Text(
+            'Transaksi akan dibatalkan dan kursi terkait akan tersedia kembali.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Tidak'),
+          ),
+          FilledButton.tonal(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(foregroundColor: Colors.redAccent),
+            child: const Text('Ya, Batalkan'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      _updateStatus('batal');
+    }
+  }
+
   String _statusLabel(String? raw) {
     final value = (raw ?? '').toLowerCase();
     if (value == 'sukses' || value == 'success') return 'Sukses';
@@ -379,34 +404,50 @@ class _AdminTransactionDetailPageState
           : SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed:
-                            _updating ? null : () => _updateStatus('pending'),
-                        child: const Text('Pending'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed:
-                            _updating ? null : () => _updateStatus('sukses'),
-                        child: _updating
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text('Tandai Sukses'),
-                      ),
-                    ),
-                  ],
-                ),
+                child: Builder(builder: (context) {
+                  final statusValue =
+                      (trx['status'] ?? '').toString().toLowerCase();
+                  final isPending = statusValue == 'pending';
+                  final primaryChild = isPending
+                      ? FilledButton(
+                          onPressed:
+                              _updating ? null : () => _updateStatus('sukses'),
+                          child: _updating
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Tandai Sukses'),
+                        )
+                      : OutlinedButton(
+                          onPressed:
+                              _updating ? null : () => _updateStatus('pending'),
+                          child: const Text('Kembalikan Pending'),
+                        );
+
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      primaryChild,
+                      if (isPending) ...[
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: _updating ? null : _confirmCancel,
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.redAccent,
+                          ),
+                          icon: const Icon(Icons.cancel_outlined),
+                          label: const Text('Batalkan Transaksi'),
+                        ),
+                      ],
+                    ],
+                  );
+                }),
               ),
             ),
     );

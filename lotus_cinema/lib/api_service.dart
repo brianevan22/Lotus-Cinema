@@ -64,7 +64,8 @@ class ApiService {
   final String baseUrl;
   late final String _effectiveBaseUrl;
 
-  static const _defaultBackend = 'http://127.0.0.1:8000';
+  static const _defaultBackend =
+      'https://laravel-lotuscinema-production.up.railway.app';
 
   static String suggestBaseUrl() {
     if (kIsWeb) return _defaultBackend;
@@ -519,7 +520,7 @@ class ApiService {
         'kursi_ids': kursiIds,
         if (kasirId != null) 'kasir_id': kasirId,
         'client_time': now.toIso8601String(),
-        'client_tz': now.timeZoneName,
+        'client_tz': _resolveClientTimeZone(),
         if (paymentMethod != null && paymentMethod.isNotEmpty)
           'payment_method': paymentMethod,
         if (paymentDestination != null && paymentDestination.isNotEmpty)
@@ -565,10 +566,20 @@ class ApiService {
 
   Future<Map<String, dynamic>> updateTransactionStatus(
       int id, String status) async {
-    Future<Map<String, dynamic>> _sendPatch() async {
-      final res = await _dio.patch('/transaksi/$id/status', data: {
+    final tz = _resolveClientTimeZone();
+    Map<String, dynamic> _payload({bool includeMethod = false}) {
+      final now = DateTime.now();
+      final body = {
         'status': status,
-      });
+        'client_time': now.toIso8601String(),
+        'client_tz': tz,
+      };
+      if (includeMethod) body['_method'] = 'PATCH';
+      return body;
+    }
+
+    Future<Map<String, dynamic>> _sendPatch() async {
+      final res = await _dio.patch('/transaksi/$id/status', data: _payload());
       return _unwrapResourceMap(res.data);
     }
 
@@ -584,15 +595,17 @@ class ApiService {
         throw _wrap(e);
       }
       try {
-        final res = await _dio.post('/transaksi/$id/status', data: {
-          'status': status,
-          '_method': 'PATCH',
-        });
+        final res = await _dio.post('/transaksi/$id/status',
+            data: _payload(includeMethod: true));
         return _unwrapResourceMap(res.data);
       } on DioException catch (inner) {
         throw _wrap(inner);
       }
     }
+  }
+
+  String _resolveClientTimeZone() {
+    return 'Asia/Jakarta';
   }
 
   Map<String, dynamic> buildTicketPayloadFromTransaction(
